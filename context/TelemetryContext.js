@@ -318,14 +318,34 @@ export function TelemetryProvider({ token, children }) {
       }
 
       const alerts = Array.isArray(alertsPayload?.alerts)
-        ? alertsPayload.alerts.map((message, index) => ({
-            id: `alert-${Date.now()}-${index}`,
-            deviceId: CASING_DEVICE_ID,
-            title: message,
-            severity: /high|critical|low/i.test(message) ? 'warning' : 'info',
-            timestamp: isoCapturedAt,
-            value: `${humidity.toFixed(1)}% · ${temperature.toFixed(1)}°C`,
-          }))
+        ? alertsPayload.alerts.map((item, index) => {
+            // Normalize both legacy string messages and new alert objects from backend
+            if (item && typeof item === 'object') {
+              const title = item.title ?? item.message ?? String(item);
+              const sev = item.severity ?? (/high|critical|low/i.test(String(title)) ? 'warning' : 'info');
+              const tsVal = item.timestamp ?? item.ts;
+              const tsIso = tsVal ? new Date(Number(tsVal)).toISOString() : isoCapturedAt;
+              const val = item.value ?? `${humidity.toFixed(1)}% · ${temperature.toFixed(1)}°C`;
+              return {
+                id: item.id ?? `alert-${tsVal ?? Date.now()}-${index}`,
+                deviceId: item.deviceId ?? CASING_DEVICE_ID,
+                title,
+                severity: sev,
+                timestamp: tsIso,
+                value: String(val),
+              };
+            }
+
+            const title = String(item);
+            return {
+              id: `alert-${Date.now()}-${index}`,
+              deviceId: CASING_DEVICE_ID,
+              title,
+              severity: /high|critical|low/i.test(title) ? 'warning' : 'info',
+              timestamp: isoCapturedAt,
+              value: `${humidity.toFixed(1)}% · ${temperature.toFixed(1)}°C`,
+            };
+          })
         : null;
 
       const triggeredCriticalAlerts = registerCriticalAlerts(
