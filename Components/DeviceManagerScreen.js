@@ -12,8 +12,6 @@ export default function DeviceManagerScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Device Manager</Text>
-
       <TouchableOpacity style={styles.addButton}>
         <MaterialCommunityIcons name="plus" size={24} color="#FFFFFF" />
         <Text style={styles.addText}>Add device</Text>
@@ -46,15 +44,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     paddingHorizontal: 16,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#A0522D',
-    fontFamily: 'System',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    paddingTop: 16,
   },
   addButton: {
     backgroundColor: '#E67E22',

@@ -13,8 +13,6 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Settings</Text>
-
       {settings.map((setting) => (
         <TouchableOpacity key={setting.id} style={styles.settingItem}>
           <MaterialCommunityIcons name={setting.icon} size={24} color="#E67E22" />
@@ -31,15 +29,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     paddingHorizontal: 16,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#A0522D',
-    fontFamily: 'System',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    paddingTop: 16,
   },
   settingItem: {
     backgroundColor: '#FFFFFF',

@@ -11,8 +11,6 @@ export default function AlertsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Alerts</Text>
-
       <View style={styles.alertsList}>
         {alerts.map((alert) => (
           <TouchableOpacity key={alert.id} style={styles.alertItem}>
@@ -41,15 +39,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     paddingHorizontal: 16,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#A0522D',
-    fontFamily: 'System',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    paddingTop: 16,
   },
   alertsList: {
     marginBottom: 24,
