@@ -3,11 +3,22 @@ import path from 'path';
 import admin from 'firebase-admin';
 
 const saEnv = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const saJson = process.env.FIREBASE_ADMIN_CREDENTIALS; // full JSON string (for Vercel/CI)
 const defaultSa = path.join(__dirname, '..', '..', 'firebase-service-account.json');
 
 let initialized = false;
 try {
-  if (saEnv && fs.existsSync(saEnv)) {
+  if (saJson) {
+    // Inline JSON credentials (e.g. set as Vercel env var)
+    const serviceAccount = JSON.parse(saJson);
+    const dbUrl = process.env.FIREBASE_DATABASE_URL;
+    const initOpts: any = { credential: admin.credential.cert(serviceAccount as admin.ServiceAccount), projectId: serviceAccount.project_id };
+    if (dbUrl) initOpts.databaseURL = dbUrl;
+    admin.initializeApp(initOpts);
+    initialized = true;
+    console.log('Firebase initialized using FIREBASE_ADMIN_CREDENTIALS env var');
+    if (initOpts.databaseURL) console.log('Realtime DB URL:', initOpts.databaseURL);
+  } else if (saEnv && fs.existsSync(saEnv)) {
     // Use explicit service account pointed by env var
     const serviceAccount = require(saEnv);
     const dbUrl = process.env.FIREBASE_DATABASE_URL;
