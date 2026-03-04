@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "backend/env-monitor-backend/api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/env-monitor-backend/api/index.ts"
+    }
+  ]
+}
