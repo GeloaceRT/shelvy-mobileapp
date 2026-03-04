@@ -1,7 +1,21 @@
 import { EventEmitter } from 'events';
-import { SerialPort } from 'serialport';
-import { ReadlineParser } from '@serialport/parser-readline';
 import { logError, logInfo } from '../utils/logger';
+
+// Lazy-load native serial modules so the file can be imported in serverless
+// environments (e.g. Vercel) where no serial port is available.
+type SerialPortType = import('serialport').SerialPort;
+type ReadlineParserType = import('@serialport/parser-readline').ReadlineParser;
+
+let SerialPortClass: (typeof import('serialport'))['SerialPort'] | undefined;
+let ReadlineParserClass: (typeof import('@serialport/parser-readline'))['ReadlineParser'] | undefined;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  SerialPortClass = require('serialport').SerialPort;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ReadlineParserClass = require('@serialport/parser-readline').ReadlineParser;
+} catch {
+  // Native module unavailable (serverless environment) — serial features disabled
+}
 
 export type Esp32SerialReading = {
   temperature: number;
@@ -22,8 +36,8 @@ type SerialEvents = {
 const newlineDelimiter = '\n';
 
 export class Esp32SerialClient extends EventEmitter {
-  private port?: SerialPort;
-  private parser?: ReadlineParser;
+  private port?: SerialPortType;
+  private parser?: ReadlineParserType;
   private latestReading?: Esp32SerialReading;
   private started = false;
 
@@ -36,9 +50,14 @@ export class Esp32SerialClient extends EventEmitter {
       return;
     }
 
+    if (!SerialPortClass || !ReadlineParserClass) {
+      logError('SerialPort native module not available in this environment — serial disabled');
+      return;
+    }
+
     try {
-      this.port = new SerialPort({ path: this.options.path, baudRate: this.options.baudRate });
-      this.parser = this.port.pipe(new ReadlineParser({ delimiter: newlineDelimiter }));
+      this.port = new SerialPortClass({ path: this.options.path, baudRate: this.options.baudRate });
+      this.parser = this.port.pipe(new ReadlineParserClass({ delimiter: newlineDelimiter }));
 
       this.port.on('open', () => {
         this.started = true;
