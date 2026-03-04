@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  readings Reading[]
+  devices  Device[]
+}
+
+model Device {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  name      String
+  deviceId  String   @unique
+  createdAt DateTime @default(now())
+
+  readings Reading[]
+  user     User      @relation(fields: [userId], references: [id])
+}
+
+model Reading {
+  id          Int      @id @default(autoincrement())
+  deviceId    Int
+  userId      Int // ✅ This was missing!
+  temperature Float?
+  humidity    Float?
+  gas         Float?
+  pressure    Float?                                  
+  pm25        Float?
+  value       Float?
+  createdAt   DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}

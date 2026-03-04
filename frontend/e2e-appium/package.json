@@ -1,0 +1,11 @@
+{
+  "name": "shelvy-e2e-appium",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "webdriverio": "^9.24.0"
+  }
+}

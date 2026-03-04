@@ -1,0 +1,17 @@
+appId: host.exp.exponent  # change if you have a custom dev-client package
+
+onFlowStart:
+  - runCommand: adb shell svc wifi disable
+  - runCommand: adb shell svc data disable
+
+steps:
+  - launchApp
+  # adjust this tap to the control that triggers a network call (text or accessibility label)
+  - tapOn: "Refresh"
+  # adjust the expected error message text
+  - assertVisible: "Unable to reach the Shelvy backend"
+  - screenshot: "error-handling"
+
+onFlowComplete:
+  - runCommand: adb shell svc wifi enable
+  - runCommand: adb shell svc data enable

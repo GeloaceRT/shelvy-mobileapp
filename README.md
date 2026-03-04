@@ -1,59 +1,26 @@
-# Shelvy Mobile App — Frontend
+# Shelvy Bread Freshness Monitoring App
 
-This React Native frontend uses Expo and connects to the Shelvy backend and Firebase for authentication.
+This repo now bundles both client and server:
 
-Prerequisites
-- Node.js (LTS recommended)
-- npm (or Yarn)
-- Expo CLI (optional): `npm install -g expo-cli`
+- frontend/ — Expo React Native mobile app (see frontend/README.md)
+- backend/env-monitor-backend/ — Node/TypeScript API + Firebase integration (see backend/env-monitor-backend/README.md)
 
-Setup
+## Quick start
 
-1. Install dependencies:
+Frontend
 
 ```bash
+cd frontend
 npm install
+npm start
 ```
 
-2. Configure Firebase client
-
-The app expects Firebase client config either in `app.json` under `expo.extra.firebaseConfig` or in the environment variable `EXPO_PUBLIC_FIREBASE_CONFIG` as a JSON string. Example `app.json` snippet:
-
-```json
-{
-  "expo": {
-    "extra": {
-      "firebaseConfig": {
-        "apiKey": "...",
-        "authDomain": "...",
-        "projectId": "...",
-        "databaseURL": "...",
-        "storageBucket": "...",
-        "messagingSenderId": "...",
-        "appId": "..."
-      }
-    }
-  }
-}
-```
-
-3. Run the app
-
-Use the npm scripts in `package.json`:
+Backend
 
 ```bash
-npm start       # open Expo dev tools
-npm run android # open on connected Android device/emulator
-npm run ios     # open on iOS simulator (macOS only)
+cd backend/env-monitor-backend
+npm install
+npm run dev
 ```
 
-You can also run `npx expo start --tunnel` to allow a physical device to connect over the tunnel.
-
-Notes
-- The frontend signs in with a custom Firebase token issued by the backend. See `services/firebase.js` for where the client expects the Firebase config.
-- If you see Git warnings about LF/CRLF on Windows, it's safe — Git will normalize line endings on commit.
-
-Contributing
-- Run `npm install` and open a PR against `geloace-test` or `main` per repo conventions.
-
-License: MIT
+Environment/config details for each project live in their respective README files.

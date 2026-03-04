@@ -1,0 +1,43 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "readings": {
+      "$deviceId": {
+        ".indexOn": ["ts"],
+        ".read": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()"
+      }
+    },
+
+    "alerts": {
+      "$deviceId": {
+        ".indexOn": ["ts"],
+        ".read": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()"
+      }
+    },
+
+    "readings-summary": {
+      "$deviceId": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()"
+      }
+    },
+
+    "devices": {
+      "$deviceId": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()",
+        ".write": false
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Shelvy",
+    "slug": "Shelvy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.geloacert.Shelvy"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:4000",
+      "firebaseConfig": {
+        "apiKey": "AIzaSyCZtOL1IAlsxiL_eAA13ZO5oqOiIhJGpOE",
+        "authDomain": "env-monitor-v2.firebaseapp.com",
+        "projectId": "env-monitor-v2",
+        "databaseURL": "https://env-monitor-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+        "storageBucket": "env-monitor-v2.appspot.com",
+        "messagingSenderId": "711363348444",
+        "appId": "1:711363348444:web:02eaafb80a94d619307119"
+      },
+      "eas": {
+        "projectId": "6b65a865-3cce-445d-a1eb-91e404de9a40"
+      }
+    }
+  }
+}
