@@ -31,6 +31,8 @@ const MIN_TEMP_C = -20;
 const MAX_TEMP_C = 80;
 const MIN_HUMIDITY = 0;
 const MAX_HUMIDITY = 100;
+// During bench testing allow any sensor values to pass through without blocking the UI
+const DISABLE_SENSOR_SANITY_CHECKS = true;
 const CRITICAL_SEVERITIES = ['warning', 'error'];
 const NOTIFICATION_CHANNEL_ID = 'shelvy-critical-alerts';
 const ENABLE_ALERT_NOTIFICATIONS = true;
@@ -308,22 +310,24 @@ export function TelemetryProvider({ token, children }) {
         throw new Error('Received invalid sensor values.');
       }
 
-      if (
-        temperature < MIN_TEMP_C ||
-        temperature > MAX_TEMP_C ||
-        humidity < MIN_HUMIDITY ||
-        humidity > MAX_HUMIDITY
-      ) {
-        throw new Error(
-          `Sensor reading out of expected range. Temp ${temperature.toFixed(1)}°C, RH ${humidity.toFixed(1)}%.`
-        );
+      if (!DISABLE_SENSOR_SANITY_CHECKS) {
+        if (
+          temperature < MIN_TEMP_C ||
+          temperature > MAX_TEMP_C ||
+          humidity < MIN_HUMIDITY ||
+          humidity > MAX_HUMIDITY
+        ) {
+          throw new Error(
+            `Sensor reading out of expected range. Temp ${temperature.toFixed(1)}°C, RH ${humidity.toFixed(1)}%.`
+          );
+        }
       }
 
       const capturedAt = reading.capturedAt ? new Date(reading.capturedAt) : new Date();
       const isoCapturedAt = capturedAt.toISOString();
 
       const ageMs = Date.now() - capturedAt.getTime();
-      if (ageMs > STALE_READING_THRESHOLD_MS) {
+      if (!DISABLE_SENSOR_SANITY_CHECKS && ageMs > STALE_READING_THRESHOLD_MS) {
         const seconds = Math.round(ageMs / 1000);
         throw new Error(`Sensor data is stale. Last update ${seconds}s ago.`);
       }

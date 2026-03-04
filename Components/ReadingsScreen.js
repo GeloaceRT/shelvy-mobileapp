@@ -1,10 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Video } from 'expo-av';
+import Constants from 'expo-constants';
 import { useTelemetry } from '../context/TelemetryContext';
+
+const STREAM_URL =
+  process.env.EXPO_PUBLIC_PI_STREAM_URL ||
+  (Constants?.expoConfig?.extra?.streamUrl ?? '') ||
+  '';
 
 export default function ReadingsScreen() {
   const { summary, history = [], devices = [], remoteDeviceId, dbError } = useTelemetry();
+  const [streamError, setStreamError] = useState(null);
+  const videoRef = useRef(null);
+
+  const streamUrl = STREAM_URL;
 
   // parse timestamp-like values (ISO string or numeric ms) into milliseconds
   const parseToMs = (v) => {
@@ -80,6 +91,32 @@ export default function ReadingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Live Feed</Text>
+        <Text style={styles.subTitle}>
+          {streamUrl
+            ? `Streaming from ${streamUrl}`
+            : 'Set EXPO_PUBLIC_PI_STREAM_URL in .env to point at your Pi HLS URL.'}
+        </Text>
+        <View style={styles.videoCard}>
+          {streamUrl ? (
+            <Video
+              ref={videoRef}
+              style={styles.video}
+              source={{ uri: streamUrl }}
+              useNativeControls
+              resizeMode="contain"
+              isLooping
+              shouldPlay
+              onError={(e) => setStreamError(e?.error?.message || 'Playback error')}
+            />
+          ) : (
+            <Text style={styles.streamNotice}>No stream URL configured.</Text>
+          )}
+          {streamError ? <Text style={styles.streamError}>Stream error: {streamError}</Text> : null}
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Readings</Text>
         {recentReadings.map((reading) => (
           <TouchableOpacity key={reading.id} style={styles.readingRow}>
@@ -130,6 +167,34 @@ const styles = StyleSheet.create({
     color: '#A0522D',
     fontFamily: 'System',
     marginBottom: 8,
+  },
+  videoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  video: {
+    width: '100%',
+    height: 220,
+    backgroundColor: '#111',
+    borderRadius: 8,
+  },
+  streamNotice: {
+    fontSize: 14,
+    color: '#A0522D',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  streamError: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#B91C1C',
   },
   readingRow: {
     backgroundColor: '#FFFFFF',
