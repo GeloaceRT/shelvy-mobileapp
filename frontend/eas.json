@@ -13,6 +13,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://shelvy-mobileapp-backend.vercel.app"
+      },
       "android": {
         "buildType": "apk"
       }

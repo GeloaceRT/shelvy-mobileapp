@@ -27,7 +27,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:4000",
+      "apiBaseUrl": "https://shelvy-mobileapp-backend.vercel.app",
       "firebaseConfig": {
         "apiKey": "AIzaSyCZtOL1IAlsxiL_eAA13ZO5oqOiIhJGpOE",
         "authDomain": "env-monitor-v2.firebaseapp.com",
