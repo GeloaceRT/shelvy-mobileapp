@@ -4,8 +4,16 @@ import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 export default function IndicatorCard({ value, unit, icon, status, optimal, timestamp, trend }) {
   const trendUnit = trend?.unit ?? unit ?? '';
-  const formattedValue = value === undefined || value === null ? '--' : value;
-  const valueUnit = formattedValue === '--' ? '' : unit ?? '';
+  const toFixed = (num, digits = 1) => {
+    const n = Number(num);
+    return Number.isFinite(n) ? n.toFixed(digits) : null;
+  };
+
+  const formattedValue = toFixed(value);
+  const valueDisplay = formattedValue ?? '--';
+  const valueUnit = formattedValue === null ? '' : unit ?? '';
+
+  const trendValue = trend ? toFixed(trend.value) : null;
 
   return (
     <View style={styles.card}>
@@ -16,16 +24,16 @@ export default function IndicatorCard({ value, unit, icon, status, optimal, time
             <View style={[styles.dot, status === 'Live' && styles.live]} />
             <Text style={styles.statusText}>{status}</Text>
           </View>
-          {trend && (
+          {trend && trendValue !== null && (
             <View style={styles.trend}>
               <Feather name={trend.direction === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color={trend.color} />
-              <Text style={[styles.trendText, { color: trend.color }]}>{trend.value}{trendUnit}</Text>
+              <Text style={[styles.trendText, { color: trend.color }]}>{trendValue}{trendUnit}</Text>
             </View>
           )}
         </View>
       </View>
 
-      <Text style={styles.value}>{formattedValue}{valueUnit}</Text>
+      <Text style={styles.value}>{valueDisplay}{valueUnit}</Text>
       {optimal && <Text style={styles.optimal}>Optimal range: {optimal}</Text>}
       {timestamp && <Text style={styles.timestamp}>Last updated {timestamp}</Text>}
     </View>
