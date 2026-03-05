@@ -299,13 +299,28 @@ export function TelemetryProvider({ token, children }) {
     setStatus((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      const reading = await fetchLatestReading(token);
+      let reading = null;
+      let dbLatest = null;
+
+      try {
+        dbLatest = await fetchLatestFromDb(token);
+      } catch (dbErr) {
+        console.warn('[Telemetry] latest-from-db failed', dbErr);
+      }
+
+      const maybeLatest = dbLatest?.latest ?? dbLatest;
+      if (maybeLatest && typeof maybeLatest === 'object') {
+        reading = maybeLatest;
+      } else {
+        reading = await fetchLatestReading(token);
+      }
+
       if (!reading) {
         throw new Error('No sensor data available.');
       }
 
-      const rawTemp = Number(reading.temperature ?? NaN);
-      const rawHum = Number(reading.humidity ?? NaN);
+      const rawTemp = Number(reading.temperature ?? reading.temp ?? NaN);
+      const rawHum = Number(reading.humidity ?? reading.rh ?? NaN);
       const temperature = Number.isFinite(rawTemp) ? rawTemp : 0;
       const humidity = Number.isFinite(rawHum) ? rawHum : 0;
 
@@ -326,7 +341,8 @@ export function TelemetryProvider({ token, children }) {
         }
       }
 
-      const capturedAt = reading.capturedAt ? new Date(reading.capturedAt) : new Date();
+      const capturedAtRaw = reading.capturedAt ?? reading.ts ?? reading.timestamp ?? reading.date;
+      const capturedAt = capturedAtRaw ? new Date(capturedAtRaw) : new Date();
       const isoCapturedAt = capturedAt.toISOString();
 
       const ageMs = Date.now() - capturedAt.getTime();
