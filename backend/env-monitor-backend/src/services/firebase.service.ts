@@ -6,6 +6,13 @@ const usersPath = (uid: string) => `users/${uid}`;
 const readingsPath = (deviceId: string) => `readings/${deviceId}`;
 const alertsPath = (deviceId: string) => `alerts/${deviceId}`;
 
+const normalizeTimestamp = (value: any): number => {
+  const ts = Number(value);
+  return Number.isFinite(ts) && ts > 0 ? ts : Date.now();
+};
+
+const formatDate = (ts: number): string => new Date(ts).toISOString().slice(0, 10).replace(/-/g, '/');
+
 export async function writeUserProfile(uid: string, profile: UserProfile): Promise<void> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   await realtimeDb.ref(usersPath(uid)).set(profile);
@@ -22,8 +29,8 @@ export async function pushReading(reading: SensorReading): Promise<string> {
   // legacy single-sensor helper (uses sensorId as deviceId)
   const deviceId = (reading as any).deviceId ?? reading.sensorId ?? 'unknown';
   const node = realtimeDb!.ref(readingsPath(deviceId)).push();
-  const date = new Date(Number(reading.ts) || Date.now()).toISOString().slice(0, 10).replace(/-/g, '/');
-  const payload = { ...reading, deviceId, date } as any;
+  const ts = normalizeTimestamp((reading as any).ts);
+  const payload = { ...reading, ts, deviceId, date: formatDate(ts) } as any;
   await node.set(payload);
   return node.key as string;
 }
@@ -31,12 +38,12 @@ export async function pushReading(reading: SensorReading): Promise<string> {
 export async function pushDeviceReading(deviceId: string, reading: SensorReading): Promise<string> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   const node = realtimeDb!.ref(readingsPath(deviceId)).push();
-  const date = new Date(Number(reading.ts) || Date.now()).toISOString().slice(0, 10).replace(/-/g, '/');
-  const payload = { ...reading, deviceId, date } as any;
+  const ts = normalizeTimestamp((reading as any).ts);
+  const payload = { ...reading, ts, deviceId, date: formatDate(ts) } as any;
   await node.set(payload);
   // update summary
   await realtimeDb.ref(`readings-summary/${deviceId}/latest`).set(payload);
-  await realtimeDb.ref(`readings-summary/${deviceId}/lastTs`).set(reading.ts);
+  await realtimeDb.ref(`readings-summary/${deviceId}/lastTs`).set(ts);
   // ensure control node exists for device so ESP32 can read flags
   try {
     await ensureDeviceControl(deviceId);
@@ -49,15 +56,18 @@ export async function pushDeviceReading(deviceId: string, reading: SensorReading
 export async function pushDeviceReadingsBatch(deviceId: string, readings: SensorReading[]): Promise<string[]> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   const updates: Record<string, any> = {};
-  readings.forEach((r) => {
+  const parsed = readings.map((r) => {
+    const ts = normalizeTimestamp((r as any).ts);
+    return { ...r, ts } as SensorReading;
+  });
+
+  parsed.forEach((r) => {
     const newKey = realtimeDb!.ref(readingsPath(deviceId)).push().key as string;
-    const date = new Date(Number(r.ts) || Date.now()).toISOString().slice(0, 10).replace(/-/g, '/');
-    updates[`${readingsPath(deviceId)}/${newKey}`] = { ...r, deviceId, date };
+    updates[`${readingsPath(deviceId)}/${newKey}`] = { ...r, deviceId, date: formatDate(r.ts) };
   });
   // find latest reading by ts
-  const last = readings.reduce((a, b) => (a.ts >= b.ts ? a : b), readings[0]);
-  const lastDate = new Date(Number(last.ts) || Date.now()).toISOString().slice(0, 10).replace(/-/g, '/');
-  updates[`readings-summary/${deviceId}/latest`] = { ...last, deviceId, date: lastDate };
+  const last = parsed.reduce((a, b) => (a.ts >= b.ts ? a : b), parsed[0]);
+  updates[`readings-summary/${deviceId}/latest`] = { ...last, deviceId, date: formatDate(last.ts) };
   updates[`readings-summary/${deviceId}/lastTs`] = last.ts;
   await realtimeDb!.ref().update(updates);
   // ensure control node exists for device
@@ -102,8 +112,8 @@ export type AlertRecord = {
 export async function pushAlert(deviceId: string, alert: AlertRecord): Promise<string> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   const node = realtimeDb.ref(alertsPath(deviceId)).push();
-  const date = new Date(Number(alert.ts) || Date.now()).toISOString().slice(0, 10).replace(/-/g, '/');
-  const payload = { ...alert, deviceId, date } as any;
+  const ts = normalizeTimestamp(alert.ts);
+  const payload = { ...alert, ts, deviceId, date: formatDate(ts) } as any;
   await node.set(payload);
   return node.key as string;
 }
@@ -130,8 +140,17 @@ export async function listAlerts(
 export async function getLatestReading(deviceId: string): Promise<SensorReading | null> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   // read the summary node which is maintained on ingest
-  const snap = await realtimeDb!.ref(`readings-summary/${deviceId}/latest`).once('value');
-  return snap.exists() ? (snap.val() as SensorReading) : null;
+  const [latestSnap, lastTsSnap] = await Promise.all([
+    realtimeDb!.ref(`readings-summary/${deviceId}/latest`).once('value'),
+    realtimeDb!.ref(`readings-summary/${deviceId}/lastTs`).once('value'),
+  ]);
+
+  if (!latestSnap.exists()) return null;
+
+  const latest = latestSnap.val() as SensorReading;
+  const fallbackTs = lastTsSnap.exists() ? Number(lastTsSnap.val()) : undefined;
+  const ts = normalizeTimestamp((latest as any).ts ?? fallbackTs);
+  return { ...latest, ts, date: formatDate(ts) } as SensorReading;
 }
 
 // Device control helpers (RTDB)

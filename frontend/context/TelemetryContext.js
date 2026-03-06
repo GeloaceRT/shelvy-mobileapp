@@ -150,6 +150,27 @@ const createInitialState = () => {
   };
 };
 
+const normalizeCapturedAt = (raw) => {
+  if (!raw) return new Date();
+
+  const isNumericString = typeof raw === 'string' && /^\d+$/.test(raw.trim());
+  const numericTs = typeof raw === 'number' ? raw : isNumericString ? Number(raw.trim()) : null;
+
+  if (numericTs && Number.isFinite(numericTs)) {
+    const date = new Date(numericTs);
+    if (Number.isFinite(date.getTime()) && date.getTime() >= Date.UTC(2000, 0, 1)) {
+      return date;
+    }
+  }
+
+  const date = raw instanceof Date ? raw : new Date(raw);
+  if (!Number.isFinite(date.getTime()) || date.getTime() < Date.UTC(2000, 0, 1)) {
+    return new Date();
+  }
+
+  return date;
+};
+
 const INITIAL_STATUS = {
   isLive: false,
   isLoading: false,
@@ -342,7 +363,7 @@ export function TelemetryProvider({ token, children }) {
       }
 
       const capturedAtRaw = reading.capturedAt ?? reading.ts ?? reading.timestamp ?? reading.date;
-      const capturedAt = capturedAtRaw ? new Date(capturedAtRaw) : new Date();
+      const capturedAt = normalizeCapturedAt(capturedAtRaw);
       const isoCapturedAt = capturedAt.toISOString();
 
       const ageMs = Date.now() - capturedAt.getTime();
@@ -574,7 +595,7 @@ export function TelemetryProvider({ token, children }) {
               deviceId: r.deviceId ?? deviceId,
               temperature: Number(r.temperature),
               humidity: Number(r.humidity),
-              timestamp: r.ts ? new Date(Number(r.ts)).toISOString() : r.date ?? new Date().toISOString(),
+              timestamp: normalizeCapturedAt(r.ts ?? r.timestamp ?? r.date).toISOString(),
             }));
           setState((prev) => ({ ...prev, history: mapped }));
           setDbError('');
@@ -603,7 +624,7 @@ export function TelemetryProvider({ token, children }) {
                 deviceId: r.deviceId ?? deviceId,
                 temperature: Number(r.temperature),
                 humidity: Number(r.humidity),
-                timestamp: r.ts ? new Date(Number(r.ts)).toISOString() : r.date ?? new Date().toISOString(),
+                timestamp: normalizeCapturedAt(r.ts ?? r.timestamp ?? r.date).toISOString(),
               }));
             setState((prev) => ({ ...prev, history: mapped }));
             setDbError('');
