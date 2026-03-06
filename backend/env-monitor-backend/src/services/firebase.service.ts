@@ -13,6 +13,13 @@ const normalizeTimestamp = (value: any): number => {
 
 const formatDate = (ts: number): string => new Date(ts).toISOString().slice(0, 10).replace(/-/g, '/');
 
+const isDateStringValid = (value: any): boolean => {
+  if (typeof value !== 'string') return false;
+  const parsed = Date.parse(value.replace(/\//g, '-'));
+  if (!Number.isFinite(parsed)) return false;
+  return parsed >= Date.UTC(2000, 0, 1);
+};
+
 export async function writeUserProfile(uid: string, profile: UserProfile): Promise<void> {
   if (!isFirebaseInitialized || !realtimeDb) throw new Error('Firebase not initialized');
   await realtimeDb.ref(usersPath(uid)).set(profile);
@@ -150,7 +157,20 @@ export async function getLatestReading(deviceId: string): Promise<SensorReading 
   const latest = latestSnap.val() as SensorReading;
   const fallbackTs = lastTsSnap.exists() ? Number(lastTsSnap.val()) : undefined;
   const ts = normalizeTimestamp((latest as any).ts ?? fallbackTs);
-  return { ...latest, ts, date: formatDate(ts) } as SensorReading;
+  const date = formatDate(ts);
+
+  // Self-heal bad summary records written earlier (e.g., ts=0 -> 1970 date)
+  const needsRepair = !isDateStringValid((latest as any).date) || !Number.isFinite((latest as any).ts);
+  if (needsRepair) {
+    const repaired = { ...latest, ts, date } as SensorReading;
+    await Promise.all([
+      realtimeDb!.ref(`readings-summary/${deviceId}/latest`).set(repaired),
+      realtimeDb!.ref(`readings-summary/${deviceId}/lastTs`).set(ts),
+    ]);
+    return repaired;
+  }
+
+  return { ...latest, ts, date } as SensorReading;
 }
 
 // Device control helpers (RTDB)
