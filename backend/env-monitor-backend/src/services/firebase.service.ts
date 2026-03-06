@@ -8,7 +8,9 @@ const alertsPath = (deviceId: string) => `alerts/${deviceId}`;
 
 const normalizeTimestamp = (value: any): number => {
   const ts = Number(value);
-  return Number.isFinite(ts) && ts > 0 ? ts : Date.now();
+  // Reject anything before 2020-01-01 — catches ESP32 millis()-since-boot and pre-NTP values
+  const MIN_VALID_TS = 1_577_836_800_000; // Date.UTC(2020, 0, 1)
+  return Number.isFinite(ts) && ts >= MIN_VALID_TS ? ts : Date.now();
 };
 
 const formatDate = (ts: number): string => new Date(ts).toISOString().slice(0, 10).replace(/-/g, '/');
