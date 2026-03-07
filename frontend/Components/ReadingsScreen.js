@@ -1,21 +1,15 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Video } from 'expo-av';
-import Constants from 'expo-constants';
+import { WebView } from 'react-native-webview';
 import { useTelemetry } from '../context/TelemetryContext';
 
-const STREAM_URL =
-  process.env.EXPO_PUBLIC_PI_STREAM_URL ||
-  (Constants?.expoConfig?.extra?.streamUrl ?? '') ||
-  '';
+const PI_FEED_URL = 'https://raspberrypi.tail6cdc1c.ts.net/';
 
 export default function ReadingsScreen() {
   const { summary, history = [], devices = [], remoteDeviceId, dbError } = useTelemetry();
-  const [streamError, setStreamError] = useState(null);
-  const videoRef = useRef(null);
-
-  const streamUrl = STREAM_URL;
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState(false);
 
   // parse timestamp-like values (ISO string or numeric ms) into milliseconds
   const parseToMs = (v) => {
@@ -92,27 +86,31 @@ export default function ReadingsScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Live Feed</Text>
-        <Text style={styles.subTitle}>
-          {streamUrl
-            ? `Streaming from ${streamUrl}`
-            : 'Set EXPO_PUBLIC_PI_STREAM_URL in .env to point at your Pi HLS URL.'}
-        </Text>
+        <Text style={styles.subTitle}>Raspberry Pi Camera</Text>
         <View style={styles.videoCard}>
-          {streamUrl ? (
-            <Video
-              ref={videoRef}
-              style={styles.video}
-              source={{ uri: streamUrl }}
-              useNativeControls
-              resizeMode="contain"
-              isLooping
-              shouldPlay
-              onError={(e) => setStreamError(e?.error?.message || 'Playback error')}
+          {feedLoading && !feedError && (
+            <ActivityIndicator
+              style={styles.feedLoader}
+              size="large"
+              color="#E67E22"
             />
-          ) : (
-            <Text style={styles.streamNotice}>No stream URL configured.</Text>
           )}
-          {streamError ? <Text style={styles.streamError}>Stream error: {streamError}</Text> : null}
+          {feedError ? (
+            <Text style={styles.streamError}>
+              Could not connect to the camera feed.{'\n'}Make sure your device is on the Tailscale network.
+            </Text>
+          ) : (
+            <WebView
+              style={styles.video}
+              source={{ uri: PI_FEED_URL }}
+              onLoadStart={() => { setFeedLoading(true); setFeedError(false); }}
+              onLoadEnd={() => setFeedLoading(false)}
+              onError={() => { setFeedLoading(false); setFeedError(true); }}
+              onHttpError={() => { setFeedLoading(false); setFeedError(true); }}
+              mediaPlaybackRequiresUserAction={false}
+              allowsInlineMediaPlayback
+            />
+          )}
         </View>
       </View>
 
@@ -169,10 +167,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   videoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000',
     borderRadius: 12,
-    padding: 8,
+    overflow: 'hidden',
     marginBottom: 12,
+    height: 260,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -180,21 +179,19 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   video: {
-    width: '100%',
-    height: 220,
+    flex: 1,
     backgroundColor: '#111',
-    borderRadius: 8,
   },
-  streamNotice: {
-    fontSize: 14,
-    color: '#A0522D',
-    textAlign: 'center',
-    paddingVertical: 12,
+  feedLoader: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 1,
   },
   streamError: {
-    marginTop: 6,
-    fontSize: 12,
+    margin: 16,
+    fontSize: 13,
     color: '#B91C1C',
+    textAlign: 'center',
   },
   readingRow: {
     backgroundColor: '#FFFFFF',

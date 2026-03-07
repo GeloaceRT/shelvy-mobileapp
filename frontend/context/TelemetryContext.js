@@ -31,8 +31,7 @@ const MIN_TEMP_C = -20;
 const MAX_TEMP_C = 80;
 const MIN_HUMIDITY = 0;
 const MAX_HUMIDITY = 100;
-// During bench testing allow any sensor values to pass through without blocking the UI
-const DISABLE_SENSOR_SANITY_CHECKS = true;
+const DISABLE_SENSOR_SANITY_CHECKS = false;
 const CRITICAL_SEVERITIES = ['warning', 'error'];
 const NOTIFICATION_CHANNEL_ID = 'shelvy-critical-alerts';
 const ENABLE_ALERT_NOTIFICATIONS = true;
@@ -337,7 +336,7 @@ export function TelemetryProvider({ token, children }) {
       }
 
       if (!reading) {
-        throw new Error('No sensor data available.');
+        throw new Error('Failed to read data from device: communication down.');
       }
 
       const rawTemp = Number(reading.temperature ?? reading.temp ?? NaN);

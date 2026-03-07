@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +24,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.geloacert.Shelvy"
+      "package": "com.geloacert.Shelvy",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,6 +45,9 @@
         "projectId": "6b65a865-3cce-445d-a1eb-91e404de9a40"
       }
     },
-    "owner": "geloacert"
+    "owner": "geloacert",
+    "updates": {
+      "url": "https://u.expo.dev/6b65a865-3cce-445d-a1eb-91e404de9a40"
+    }
   }
 }
